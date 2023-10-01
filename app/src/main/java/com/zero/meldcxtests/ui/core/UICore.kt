@@ -1,6 +1,7 @@
 package com.zero.meldcxtests.ui.core
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -19,6 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -40,6 +43,17 @@ fun UICore(database: AppDatabase, navController: NavHostController = rememberNav
         mutableStateOf("Home")
     }
     val context = LocalContext.current
+    var rememberForceRecomposition by remember {
+        mutableStateOf(true)
+    }
+    LifecycleResumeEffect(key1 = Lifecycle.Event.ON_RESUME, effects = {
+        Log.i("HomeScreen", "HomeScreen: REFRESHING")
+        database.invalidationTracker.refreshVersionsAsync()
+        rememberForceRecomposition = rememberForceRecomposition.not()
+        onPauseOrDispose {
+
+        }
+    })
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(text = title) },
@@ -65,8 +79,8 @@ fun UICore(database: AppDatabase, navController: NavHostController = rememberNav
         NavHost(navController = navController, startDestination = Routes.HOME.name, modifier = Modifier.padding(paddingValues = it)) {
             composable(route = Routes.HOME.name) { navBackStackEntry ->
                 title = "Home"
-                val `package`:ApplicationData?=navBackStackEntry.savedStateHandle["selected_app"]
-                HomeScreen(database = database, selectedPackage = `package`) {
+                val `package`: ApplicationData? = navBackStackEntry.savedStateHandle["selected_app"]
+                HomeScreen(database = database, syncKey = rememberForceRecomposition, selectedPackage = `package`) {
                     navBackStackEntry.savedStateHandle["selected_app"] = null
                     if (context.shouldAskForAlarmPermission()) {
                         context.askForAlarmPermission()

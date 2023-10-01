@@ -8,6 +8,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,16 +31,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen(database: AppDatabase, selectedPackage: ApplicationData? = null, onNewSchedule: () -> Unit) {
+fun HomeScreen(database: AppDatabase, syncKey:Boolean, selectedPackage: ApplicationData? = null, onNewSchedule: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize()) {
-        val dbScheduleItems by database.scheduleItemDao().getAll().observeAsState(initial = emptyList())
-        LifecycleResumeEffect(key1 = Lifecycle.Event.ON_RESUME, effects = {
+        /*LifecycleResumeEffect(key1 = Lifecycle.Event.ON_RESUME, effects = {
             Log.i("HomeScreen", "HomeScreen: REFRESHING")
             database.invalidationTracker.refreshVersionsAsync()
             onPauseOrDispose {
 
             }
-        })
+        })*/
+        val dbScheduleItems by database.scheduleItemDao().getAll().observeAsState(initial = emptyList())
         val context = LocalContext.current
         val packageManager = context.packageManager
         val scope = rememberCoroutineScope()
@@ -66,32 +67,34 @@ fun HomeScreen(database: AppDatabase, selectedPackage: ApplicationData? = null, 
                 }
             }
         }
-        if (dbScheduleItems.isNotEmpty()) {
-            Schedules(scheduleItems = dbScheduleItems,
-                onAddNewClicked = {
-                    editingSchedule = null
-                    onNewSchedule()
-                },
-                onEditClicked = { schedule ->
-                    editingSchedule = schedule
-                    showEditingDialog = true
-                }, onDeleteClicked = { schedule ->
-                    scope.launch(Dispatchers.IO) {
-                        database.scheduleItemDao().deleteSchedule(schedule = schedule)
-                        context.cancelAlarm(scheduleId = schedule.id)
+        key(syncKey){
+            if (dbScheduleItems.isNotEmpty()) {
+                Schedules(scheduleItems = dbScheduleItems,
+                    onAddNewClicked = {
+                        editingSchedule = null
+                        onNewSchedule()
+                    },
+                    onEditClicked = { schedule ->
+                        editingSchedule = schedule
+                        showEditingDialog = true
+                    }, onDeleteClicked = { schedule ->
+                        scope.launch(Dispatchers.IO) {
+                            database.scheduleItemDao().deleteSchedule(schedule = schedule)
+                            context.cancelAlarm(scheduleId = schedule.id)
+                        }
+                    })
+
+            } else {
+                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+
+                    Text(text = "Add New Schedule", modifier = Modifier.align(alignment = Alignment.CenterHorizontally))
+                    Button(onClick = {
+                        onNewSchedule()
+                    }) {
+                        Text(text = "Add Schedule")
                     }
-                })
 
-        } else {
-            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-
-                Text(text = "Add New Schedule", modifier = Modifier.align(alignment = Alignment.CenterHorizontally))
-                Button(onClick = {
-                    onNewSchedule()
-                }) {
-                    Text(text = "Add Schedule")
                 }
-
             }
         }
         if (selectedPackage != null && showAddDialog)
