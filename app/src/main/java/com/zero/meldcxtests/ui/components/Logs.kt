@@ -19,7 +19,12 @@ fun LogItem(modifier: Modifier, scheduleLog: ScheduleLog) {
     Column(modifier = modifier.padding(10.dp)) {
         Row {
             Text(modifier = Modifier.weight(1f), text = scheduleLog.scheduleName)
-            Text(text = "${then.get(Calendar.HOUR_OF_DAY)}:${then.get(Calendar.MINUTE)}")
+            Text(
+                text = "%02d:%02d".format(
+                    then.get(Calendar.HOUR_OF_DAY),
+                    then.get(Calendar.MINUTE)
+                )
+            )
         }
         AppLine(name = scheduleLog.appName, iconDrawable = scheduleLog.appIcon)
     }

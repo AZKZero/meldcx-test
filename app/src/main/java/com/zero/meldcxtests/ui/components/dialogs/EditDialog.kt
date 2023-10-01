@@ -35,37 +35,43 @@ import java.util.Calendar
 fun EditDialog(scheduleItem: ScheduleItem, onConfirmed: (ScheduleItem) -> Unit, onClosed: () -> Unit) {
     Dialog(onDismissRequest = { onClosed() }) {
         Card(shape = RoundedCornerShape(16.dp), modifier = Modifier.padding(16.dp)) {
-            var name by remember {
-                mutableStateOf(scheduleItem.scheduleName)
-            }
-            val timePickerState = rememberTimePickerState(initialHour = scheduleItem.scheduleHour, initialMinute = scheduleItem.scheduleMinute, is24Hour = false)
-
-            OutlinedTextField(value = "", onValueChange = {
-                name = it
-            })
-            Divider(thickness = 1.dp, color = Color.Gray)
-            AppLine(name = scheduleItem.appName, iconDrawable = scheduleItem.appIcon)
-            Divider(thickness = 1.dp, color = Color.Gray)
-            TimePicker(state = timePickerState, layoutType = TimePickerLayoutType.Vertical)
-            Divider(thickness = 1.dp, color = Color.Gray)
-            Button(modifier = Modifier.fillMaxWidth(), onClick = {
-                val timestamp = Calendar.getInstance().apply {
-                    set(Calendar.HOUR_OF_DAY, timePickerState.hour)
-                    set(Calendar.MINUTE, timePickerState.minute)
-                }.timeInMillis
-
-                val editedScheduleItem = ScheduleItem(
-                    id = 0,
-                    scheduleName = name,
-                    schedulePackageName = scheduleItem.schedulePackageName,
-                    scheduleTimeMillis = timestamp,
-                    scheduleHour = timePickerState.hour,
-                    scheduleMinute = timePickerState.minute
+            Column(
+                Modifier.padding(
+                    16.dp
                 )
-                Log.i("EditDialog", "AddDialog: $editedScheduleItem ${timePickerState.hour} ${timePickerState.minute}")
-                onConfirmed(editedScheduleItem)
-            }) {
-                Text(text = "Confirm")
+            ) {
+                var name by remember {
+                    mutableStateOf(scheduleItem.scheduleName)
+                }
+                val timePickerState = rememberTimePickerState(initialHour = scheduleItem.scheduleHour, initialMinute = scheduleItem.scheduleMinute, is24Hour = false)
+
+                OutlinedTextField(value = "", onValueChange = {
+                    name = it
+                })
+                Divider(thickness = 1.dp, color = Color.Gray)
+                AppLine(name = scheduleItem.appName, iconDrawable = scheduleItem.appIcon)
+                Divider(thickness = 1.dp, color = Color.Gray)
+                TimePicker(state = timePickerState, layoutType = TimePickerLayoutType.Vertical)
+                Divider(thickness = 1.dp, color = Color.Gray)
+                Button(modifier = Modifier.fillMaxWidth(), onClick = {
+                    val timestamp = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                        set(Calendar.MINUTE, timePickerState.minute)
+                    }.timeInMillis
+
+                    val editedScheduleItem = ScheduleItem(
+                        id = 0,
+                        scheduleName = name,
+                        schedulePackageName = scheduleItem.schedulePackageName,
+                        scheduleTimeMillis = timestamp,
+                        scheduleHour = timePickerState.hour,
+                        scheduleMinute = timePickerState.minute
+                    )
+                    Log.i("EditDialog", "AddDialog: $editedScheduleItem ${timePickerState.hour} ${timePickerState.minute}")
+                    onConfirmed(editedScheduleItem)
+                }) {
+                    Text(text = "Confirm")
+                }
             }
         }
     }

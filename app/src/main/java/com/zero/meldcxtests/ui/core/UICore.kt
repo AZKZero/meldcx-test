@@ -24,6 +24,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zero.meldcxtests.AppDatabase
+import com.zero.meldcxtests.models.ApplicationData
 import com.zero.meldcxtests.ui.screens.AppListScreen
 import com.zero.meldcxtests.ui.screens.HomeScreen
 import com.zero.meldcxtests.ui.screens.LogListScreen
@@ -52,7 +53,10 @@ fun UICore(database: AppDatabase, navController: NavHostController = rememberNav
                         }
                     }
                 }, actions = {
-                    if (title == "Home") Button(onClick = { navController.navigate(Routes.LOGS.name) }) {
+                    if (title == "Home") Button(onClick = {
+                        navController.currentBackStackEntry?.savedStateHandle?.set("selected_app", null)
+                        navController.navigate(Routes.LOGS.name)
+                    }) {
                         Text(text = "Logs")
                     }
                 })
@@ -61,13 +65,14 @@ fun UICore(database: AppDatabase, navController: NavHostController = rememberNav
         NavHost(navController = navController, startDestination = Routes.HOME.name, modifier = Modifier.padding(paddingValues = it)) {
             composable(route = Routes.HOME.name) { navBackStackEntry ->
                 title = "Home"
-                HomeScreen(database = database, selectedPackage = navBackStackEntry.savedStateHandle["selected_app"]) {
+                val `package`:ApplicationData?=navBackStackEntry.savedStateHandle["selected_app"]
+                HomeScreen(database = database, selectedPackage = `package`) {
+                    navBackStackEntry.savedStateHandle["selected_app"] = null
                     if (context.shouldAskForAlarmPermission()) {
                         context.askForAlarmPermission()
                         (context as? Activity)?.finish()
                     } else navController.navigate(Routes.APP_SELECT.name)
                 }
-                navBackStackEntry.savedStateHandle["selected_app"] = null
             }
             composable(route = Routes.APP_SELECT.name) {
                 title = "Select App"
